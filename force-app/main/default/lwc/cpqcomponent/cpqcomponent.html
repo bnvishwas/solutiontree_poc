@@ -1,0 +1,30 @@
+<template>
+    <lightning-combobox
+            name="Country Region"
+            label="Country Region"
+            value={regionvalue}
+            placeholder="Select Country Region"
+            options={countryregionlist}
+            onchange={handleregionChange} ></lightning-combobox>
+
+    <p>Selected value is: {regionvalue}</p>
+
+    <lightning-combobox
+    name="Rating"
+    label="Rating"
+    value={ratingvalue}
+    placeholder="Select Rating"
+    options={ratinglist}
+    onchange={handleratingChange} ></lightning-combobox>
+
+<p>Selected rating value is: {ratingvalue}</p>
+
+<lightning-input type="date" name="Event Date" label="Event Date" value={Eventdate} onchange={Eventdatehandle}></lightning-input>
+
+<!-- <lightning-card title="Contact Records" icon-name="standard:contact"> -->
+    <lightning-datatable
+                        key-field="Id"
+                        data = {speakerlist}
+                        columns={columns}></lightning-datatable>
+<!-- </lightning-card> -->
+</template>
