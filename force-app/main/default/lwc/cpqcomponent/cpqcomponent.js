@@ -17,11 +17,11 @@ import rating_Value from '@salesforce/schema/Contact.Ratings__c';
 
 const cols = [
     { label: 'Name', fieldName: 'Name' },
-    { label: 'Rating', fieldName: 'Rating' },
+    // { label: 'Rating', fieldName: 'Rating' },
     { label: 'Email', fieldName: 'Email' },
-    { label: 'Region', fieldName: 'Region' },
-    { label: 'start_time', fieldName: 'start_time' },
-    { label: 'end_time', fieldName: 'end_time' }
+    // { label: 'Region', fieldName: 'Region' },
+    { label: 'start_time', fieldName: 'dispaly_start_time' },
+    { label: 'end_time', fieldName: 'disaply_end_time' }
 ]
 
 export default class Cpqcomponent extends LightningElement {
@@ -90,7 +90,10 @@ export default class Cpqcomponent extends LightningElement {
 
     Eventdatehandle(event) {
         this.Eventdate = event.target.value;
-        this.loadspeaker();
+        var modeddate = this.getLocaldatetime(this.Eventdate);
+        console.log(modeddate);
+        console.log(this.getDayofweek(modeddate));
+        //this.loadspeaker();
     }
 
     @track speakerlist = [];
@@ -130,34 +133,36 @@ export default class Cpqcomponent extends LightningElement {
         //apex caontroller - which derives the slot 
 
 
-        getSpeakerslotdata({region : region, rating : rating})
-        .then((response)=>{
-            console.log('Data from Apex ');
-            console.log(JSON.stringify(response));
+        getSpeakerslotdata({ region: region, rating: rating })
+            .then((response) => {
+                console.log('Data from Apex ');
+                console.log(JSON.stringify(response));
 
-            var resposedata = JSON.parse(response);
-            var modifiedspeakerlist = []; 
-            var index = 0;
-            for(var item in resposedata){
-                var speakerdata = Object.assign({},resposedata[item]);
-                for(var entry in speakerdata.Available_Slot){
-                    var timeslot = speakerdata.Available_Slot[entry];
-                    var slotdetails = [];
-                    slotdetails = Object.assign({},speakerdata);
-                    slotdetails['start_time'] = timeslot.start_time;
-                    slotdetails['end_time'] = timeslot.end_time;
-                    slotdetails['index'] = index;
-                    modifiedspeakerlist.push(slotdetails);
-                    index++;
+                var resposedata = JSON.parse(response);
+                var modifiedspeakerlist = [];
+                var index = 0;
+                for (var item in resposedata) {
+                    var speakerdata = Object.assign({}, resposedata[item]);
+                    for (var entry in speakerdata.Available_Slot) {
+                        var timeslot = speakerdata.Available_Slot[entry];
+                        var slotdetails = [];
+                        slotdetails = Object.assign({}, speakerdata);
+                        slotdetails['start_time'] = timeslot.start_time;
+                        slotdetails['end_time'] = timeslot.end_time;
+                        slotdetails['dispaly_start_time'] = this.getmoddedtime(timeslot.start_time);
+                        slotdetails['disaply_end_time'] = this.getmoddedtime(timeslot.end_time);
+                        slotdetails['index'] = index;
+                        modifiedspeakerlist.push(slotdetails);
+                        index++;
+                    }
                 }
-            }
-            this.speakerlist = modifiedspeakerlist;
-            JSON.stringify('modified list '+this.speakerlist);
-        })
-        .catch((error)=>{
-            this.speakerlist = [];
-            console.log('Error on apex call : '+error.message);
-        })
+                this.speakerlist = modifiedspeakerlist;
+                JSON.stringify('modified list ' + this.speakerlist);
+            })
+            .catch((error) => {
+                this.speakerlist = [];
+                console.log('Error on apex call : ' + error.message);
+            })
 
         /*
         getcontactrecords({ region: region, rating: rating, d: d })
@@ -182,17 +187,59 @@ export default class Cpqcomponent extends LightningElement {
         */ //event data from APex controller
     }
 
-    getmoddeddate(time) {
+    getmoddedtime(time) {
         var formatteddate = undefined;
         if (time != undefined) {
-          var jsdate = new Date(time);
-          var ampm = hours >= 12 ? "PM" : "AM";
-          hours = hours % 12;
-          hours = hours ? hours : 12; // the hour '0' should be '12'
-          minutes = minutes < 10 ? "0" + minutes : minutes;
-          var strTime = hours + ":" + minutes + " " + ampm;
-          return strTime;
+            var today = new Date();
+            var jsdate = new Date(today.toISOString().split('T')[0] + 'T' + time);
+            var hours = jsdate.getUTCHours();
+            var minutes = jsdate.getUTCMinutes();
+            var ampm = hours >= 12 ? "PM" : "AM";
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            var strTime = hours + ":" + minutes + " " + ampm;
+            return strTime;
         }
         return formatteddate;
-      }
+    }
+
+    getLocaldatetime(ip_date) {
+        if (ip_date != undefined) {
+            var tempdate = new Date();;
+
+            var hour = tempdate.getHours();
+            var min = tempdate.getMinutes();
+            var sec = tempdate.getSeconds();
+
+            hour = hour >= 10 ? hour : '0' + hour;
+            min = min >= 10 ? min : '0' + min;
+            sec = sec >= 10 ? sec : '0' + sec;
+
+            var timezoneoffset = tempdate.getTimezoneOffset();
+            var sign = Math.sign(timezoneoffset);
+            var hourOffset = Math.trunc(Math.abs(timezoneoffset) / 60);
+            var minoffset = Math.abs(timezoneoffset % 60);
+
+            sign = sign > 0 ? '-' : '+';
+            hourOffset = hourOffset >= 10 ? hourOffset : '0' + hourOffset;
+            minoffset = minoffset >= 10 ? minoffset : '0' + minoffset;
+
+            var strTime = hour + ':' + min + ':' + sec + '.000' + sign + hourOffset + ':' + minoffset;
+            return ip_date + 'T' + strTime;
+        }
+        else
+            return null;
+    }
+
+    @track daysInWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY',
+        'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    getDayofweek(selecteddate) {
+        if (selecteddate != null) {
+            var dayIndex = new Date(selecteddate).getDay();
+            var weekDay = this.daysInWeek[dayIndex];
+            return weekDay;
+        }
+        return null;
+    }
 }
