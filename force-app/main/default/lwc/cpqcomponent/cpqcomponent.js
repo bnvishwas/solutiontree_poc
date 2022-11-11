@@ -88,12 +88,14 @@ export default class Cpqcomponent extends LightningElement {
         this.loadspeaker();
     }
 
+    @track eventweekday;
     Eventdatehandle(event) {
         this.Eventdate = event.target.value;
         var modeddate = this.getLocaldatetime(this.Eventdate);
         console.log(modeddate);
         console.log(this.getDayofweek(modeddate));
-        //this.loadspeaker();
+        this.eventweekday = this.getDayofweek(modeddate);
+        this.loadspeaker();
     }
 
     @track speakerlist = [];
@@ -120,7 +122,8 @@ export default class Cpqcomponent extends LightningElement {
     loadspeaker() {
         var rating = this.ratingvalue;
         var region = this.regionvalue;
-        var d = this.Eventdate;
+        var eventdate = this.Eventdate;
+        var weekday = this.eventweekday;
         if (this.regionvalue == undefined) {
             region = null;
         }
@@ -128,12 +131,15 @@ export default class Cpqcomponent extends LightningElement {
             rating = null;
         }
         if (this.Eventdate == undefined) {
-            d = null;
+            eventdate = null;
+        }
+        if (this.eventweekday == undefined) {
+            weekday = null;
         }
         //apex caontroller - which derives the slot 
 
 
-        getSpeakerslotdata({ region: region, rating: rating })
+        getSpeakerslotdata({ region: region, rating: rating, weekDay: weekday , eventDate: eventdate})
             .then((response) => {
                 console.log('Data from Apex ');
                 console.log(JSON.stringify(response));
